@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Get survey statistics",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "totalResponses": "number",
+        "profileStats": "array",
+        "questionStats": "object"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

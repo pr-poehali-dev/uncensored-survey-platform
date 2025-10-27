@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -6,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Question {
   id: number;
@@ -72,6 +73,7 @@ export default function Index() {
   const [showResults, setShowResults] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
@@ -92,6 +94,8 @@ export default function Index() {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
+      const profile = getResultProfile(newAnswers);
+      await saveResponse(profile.title, newAnswers);
       setShowResults(true);
     }
   };
@@ -110,8 +114,29 @@ export default function Index() {
     setSelectedAnswer('');
   };
 
-  const getResultProfile = () => {
-    const answerValues = Object.values(answers);
+  const saveResponse = async (profileType: string, answersData: Record<number, string>) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/e494523f-0c86-4156-b93b-c070bcc06cd5', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          profileType,
+          answers: answersData
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save response');
+      }
+    } catch (error) {
+      console.error('Error saving response:', error);
+    }
+  };
+
+  const getResultProfile = (answersData: Record<number, string> = answers) => {
+    const answerValues = Object.values(answersData);
     
     const privacyFocused = answerValues.filter(a => 
       a.includes('Критически важна') || 
@@ -196,14 +221,25 @@ export default function Index() {
                   ))}
                 </div>
 
-                <Button 
-                  onClick={handleRestart}
-                  size="lg"
-                  className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground neon-glow"
-                >
-                  <Icon name="RotateCcw" size={20} className="mr-2" />
-                  Пройти опрос заново
-                </Button>
+                <div className="flex gap-4 justify-center">
+                  <Button 
+                    onClick={handleRestart}
+                    size="lg"
+                    variant="outline"
+                    className="mt-8 border-primary/30 hover:bg-primary/10"
+                  >
+                    <Icon name="RotateCcw" size={20} className="mr-2" />
+                    Пройти опрос заново
+                  </Button>
+                  <Button 
+                    onClick={() => navigate('/stats')}
+                    size="lg"
+                    className="mt-8 bg-primary hover:bg-primary/90 text-primary-foreground neon-glow"
+                  >
+                    <Icon name="BarChart3" size={20} className="mr-2" />
+                    Посмотреть статистику
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -216,6 +252,14 @@ export default function Index() {
     <div className="min-h-screen cyber-grid flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8 animate-fade-in">
+          <Button
+            onClick={() => navigate('/stats')}
+            variant="outline"
+            className="mb-6 border-primary/30 hover:bg-primary/10"
+          >
+            <Icon name="BarChart3" size={20} className="mr-2" />
+            Посмотреть статистику
+          </Button>
           <h1 className="text-5xl md:text-6xl font-bold text-primary neon-text mb-4">
             Свободная Сеть
           </h1>
