@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +13,8 @@ interface Question {
   id: number;
   text: string;
   options: string[];
+  allowCustomAnswer?: boolean;
+  customAnswerPlaceholder?: string;
 }
 
 const questions: Question[] = [
@@ -37,6 +40,45 @@ const questions: Question[] = [
   },
   {
     id: 3,
+    text: 'Какой функционал для вас самый важный в соцсети?',
+    options: [
+      'Мессенджер и личные сообщения',
+      'Лента новостей и подписки',
+      'Группы и сообщества по интересам',
+      'Видео и стримы',
+      'Свой вариант'
+    ],
+    allowCustomAnswer: true,
+    customAnswerPlaceholder: 'Напишите свой вариант...'
+  },
+  {
+    id: 4,
+    text: 'Вас забанили в соцсети. Что вы делаете в первую очередь?',
+    options: [
+      'Создаю новый аккаунт за 5 минут',
+      'Пишу в поддержку эпическое сочинение',
+      'Иду гулять - наконец-то свободен!',
+      'Собираю документы для иска',
+      'Свой мем-вариант'
+    ],
+    allowCustomAnswer: true,
+    customAnswerPlaceholder: 'Напишите что сделаете вы...'
+  },
+  {
+    id: 5,
+    text: 'Если бы соцсеть была человеком, какую роль она бы играла в вашей жизни?',
+    options: [
+      'Лучший друг, которому доверяю всё',
+      'Знакомый, с которым приятно пообщаться',
+      'Коллега - только по делу',
+      'Навязчивый сосед, но иногда полезный',
+      'Свой вариант'
+    ],
+    allowCustomAnswer: true,
+    customAnswerPlaceholder: 'Опишите свою метафору...'
+  },
+  {
+    id: 6,
     text: 'Готовы ли вы пожертвовать удобством ради отсутствия цензуры?',
     options: [
       'Да, свобода слова важнее удобства',
@@ -46,7 +88,20 @@ const questions: Question[] = [
     ]
   },
   {
-    id: 4,
+    id: 7,
+    text: 'Представьте: вы можете создать идеальную соцсеть. Что в ней главное?',
+    options: [
+      'Полная приватность и анонимность',
+      'Свобода самовыражения без границ',
+      'Настоящие человеческие связи',
+      'Качественный контент без спама',
+      'Своя философия'
+    ],
+    allowCustomAnswer: true,
+    customAnswerPlaceholder: 'Опишите свою идеальную соцсеть...'
+  },
+  {
+    id: 8,
     text: 'Как должна модерироваться социальная сеть без цензуры?',
     options: [
       'Вообще никак - полная свобода',
@@ -56,7 +111,20 @@ const questions: Question[] = [
     ]
   },
   {
-    id: 5,
+    id: 9,
+    text: 'Если бы вам пришлось прожить день без соцсетей, что было бы труднее всего?',
+    options: [
+      'Не узнать новости и что происходит в мире',
+      'Потерять связь с друзьями и близкими',
+      'Скучать - нечем заняться в очередях',
+      'Ничего страшного, переживу легко',
+      'Свой ответ'
+    ],
+    allowCustomAnswer: true,
+    customAnswerPlaceholder: 'Что было бы для вас сложнее всего?'
+  },
+  {
+    id: 10,
     text: 'Что для вас важнее в свободной соцсети?',
     options: [
       'Невозможность отследить мою личность',
@@ -72,24 +140,30 @@ export default function Index() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [showResults, setShowResults] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+  const [customAnswer, setCustomAnswer] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   const handleNext = async () => {
-    if (!selectedAnswer) {
+    const finalAnswer = selectedAnswer === 'Свой вариант' || selectedAnswer === 'Свой ответ' || selectedAnswer === 'Своя философия' || selectedAnswer === 'Свой мем-вариант' 
+      ? customAnswer 
+      : selectedAnswer;
+
+    if (!finalAnswer) {
       toast({
         title: 'Выберите ответ',
-        description: 'Пожалуйста, выберите один из вариантов ответа',
+        description: selectedAnswer.includes('Свой') ? 'Пожалуйста, напишите свой ответ' : 'Пожалуйста, выберите один из вариантов ответа',
         variant: 'destructive'
       });
       return;
     }
 
-    const newAnswers = { ...answers, [questions[currentQuestion].id]: selectedAnswer };
+    const newAnswers = { ...answers, [questions[currentQuestion].id]: finalAnswer };
     setAnswers(newAnswers);
     setSelectedAnswer('');
+    setCustomAnswer('');
 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
@@ -103,7 +177,9 @@ export default function Index() {
   const handlePrevious = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
-      setSelectedAnswer(answers[questions[currentQuestion - 1].id] || '');
+      const prevAnswer = answers[questions[currentQuestion - 1].id] || '';
+      setSelectedAnswer(prevAnswer);
+      setCustomAnswer('');
     }
   };
 
@@ -286,7 +362,12 @@ export default function Index() {
               {questions[currentQuestion].text}
             </h2>
 
-            <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer} className="space-y-4">
+            <RadioGroup value={selectedAnswer} onValueChange={(value) => {
+              setSelectedAnswer(value);
+              if (!value.includes('Свой')) {
+                setCustomAnswer('');
+              }
+            }} className="space-y-4">
               {questions[currentQuestion].options.map((option, index) => (
                 <div
                   key={index}
@@ -295,7 +376,12 @@ export default function Index() {
                       ? 'border-primary bg-primary/10 neon-glow'
                       : 'border-border'
                   }`}
-                  onClick={() => setSelectedAnswer(option)}
+                  onClick={() => {
+                    setSelectedAnswer(option);
+                    if (!option.includes('Свой')) {
+                      setCustomAnswer('');
+                    }
+                  }}
                 >
                   <RadioGroupItem value={option} id={`option-${index}`} />
                   <Label
@@ -307,6 +393,18 @@ export default function Index() {
                 </div>
               ))}
             </RadioGroup>
+
+            {questions[currentQuestion].allowCustomAnswer && (selectedAnswer === 'Свой вариант' || selectedAnswer === 'Свой ответ' || selectedAnswer === 'Своя философия' || selectedAnswer === 'Свой мем-вариант') && (
+              <div className="mt-6 animate-fade-in">
+                <Textarea
+                  value={customAnswer}
+                  onChange={(e) => setCustomAnswer(e.target.value)}
+                  placeholder={questions[currentQuestion].customAnswerPlaceholder || 'Напишите свой ответ...'}
+                  className="min-h-[100px] border-primary/30 focus:border-primary bg-background/50"
+                  autoFocus
+                />
+              </div>
+            )}
 
             <div className="flex gap-4 mt-8">
               {currentQuestion > 0 && (
