@@ -77,7 +77,7 @@ export default function Index() {
 
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!selectedAnswer) {
       toast({
         title: 'Выберите ответ',
