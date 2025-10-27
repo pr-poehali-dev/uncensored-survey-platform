@@ -287,7 +287,7 @@ export default function Index() {
             Посмотреть статистику
           </Button>
           <h1 className="text-5xl md:text-6xl font-bold text-primary neon-text mb-4">
-            Свободная Сеть
+            Охлократия
           </h1>
           <p className="text-xl text-foreground/70">
             Опрос о социальных сетях без цензуры
